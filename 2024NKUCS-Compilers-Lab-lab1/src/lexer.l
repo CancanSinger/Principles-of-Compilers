@@ -21,8 +21,7 @@
         KIND_PTR,
         KIND_NONE,
         KIND_FLOAT} kindUncen;//用于处理最后一列不确定的类型配合通用指针void*来处理
-
-       inline void dump_tokens(const char* type, const char* text,
+    inline void dump_tokens(const char* type, const char* text,
                             int line, int col,
                             kindUncen kind, void* attr=NULL) {
         if (dump_type != TOKENS) return;
@@ -40,7 +39,7 @@
                 fprintf(yyout, "%-10p\n", attr);
                 break;
             case KIND_NONE:
-                fprintf(yyout,"%-10s\n","");
+                fprintf(yyout,"\n");
                 break;
             case KIND_FLOAT:
                 fprintf(yyout,"%-10f\n",*(float*)attr);
@@ -49,40 +48,19 @@
                 fprintf(yyout, "\n");
         }
     }
-%}
-/*定义词法分析器接受的字符集*/
-%{
-    //2312130景千夏的代码
-    //在flex文件中定义全局变量
-    extern int yylex();
-    extern FILE* yyin;
-    extern int yylineno;
-    extern int yycol;
-%}
-/*定义词法分析器接受的字符集*/
-%{
-    //2312130景千夏的代码
-    //在flex文件中定义全局变量
-    extern int yylex();
-    extern FILE* yyin;
-    extern int yylineno;
 
 %}
 
 /* definitions section */
-/*十进制整数的正则表达式*/
 DECIMIAL ([1-9][0-9]*|0)
-/*标识符的正则表达式*/
 ID [[:alpha:]_][[:alpha:][:digit:]_]*
 /*2312130景千夏的代码*/
 /* ID [a-zA-Z_][a-zA-Z0-9_]* */
-/*换行符的正则表达式*/
 EOL (\r\n|\n|\r)
-WHITE [\t]
+WHITE [\t ]
 /*  Your code here (lab1). */
 /* 定义int的各种进制的正则表达式*/
-OctNum (0[0-7][0-7]*|0[oO][0-7]+)
-
+OctNum (0[0-7][0-7]*|0[oO][0-7]+)  
 HexNum (0[xX][0-9a-fA-F]+|[0-9a-fA-F]+[hH])
 /* 浮点型常量的正则表达式*/
 FloatNum ([0-9]+.[0-9]*[eE]?[+-]?[0-9]*|[0-9]+[.]?[0-9]*)
@@ -92,10 +70,10 @@ EXP ([eE][+-]?[Dight]+)
 FloatNum2 (({Dight}+\.{Dight}*{EXP}?)|({Dight}+{EXP})|\.{Dight}+{EXP}?)
 /*注释的正则表达式*/
 /* 为了更简单的处理注释的正则表达式,对注释的表达式分开来写*/
-/*单行注释*/
 ANNOTATION1 "//"[^\n]* 
-/*多行注释*/
+/*单行注释*/
 ANNOTATION2 "/*"([^*]|\*+[^/])*\*+"/"
+/*多行注释*/
 %%
     /* rules section */
     //引用底座的代码
@@ -136,17 +114,51 @@ ANNOTATION2 "/*"([^*]|\*+[^/])*\*+"/"
     yycol+=yyleng;//列号加上单词长度
 }
 
+">" {
+    dump_tokens("GT", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+"==" {
+    dump_tokens("EQ", yytext, yylineno, yycol,KIND_NONE,NULL);
+    yycol+=yyleng;//列号加上单词长度
+}
+"!=" {
+    dump_tokens("NEQ", yytext, yylineno, yycol,KIND_NONE,NULL);
+    yycol+=yyleng;//列号加上单词长度
+}
+
 "+" {
     dump_tokens("ADD", yytext, yylineno, yycol,KIND_NONE,NULL);
+    yycol+=yyleng;//列号加上单词长度
+}
+"-" {//对于负数和减法,统一用减法表示,认为是减法
+    dump_tokens("SUB",yytext,yylineno,yycol,KIND_NONE,NULL);
+    yycol+=yyleng;//列号加上单词长度
+}
+"*" {//乘法
+    dump_tokens("NUL",yytext ,yylineno ,yycol,KIND_NONE,NULL);
+    yycol+=yyleng;//列号加上单词长度
+}
+"&&" {//增加逻辑运算符的处理
+    dump_tokens("AND",yytext,yylineno,yycol,KIND_NONE,NULL);
+    yycol+=yyleng;
+}
+"||" {
+    dump_tokens("OR",yytext,yylineno,yycol,KIND_NONE,NULL);
+    yycol+=yyleng;
+}
+"!" {
+    dump_tokens("NOT",yytext,yylineno,yycol,KIND_NONE,NULL);
+    yycol+=yyleng;
+}
+"/" {//除法
+    dump_tokens("DIV",yytext ,yylineno ,yycol,KIND_NONE,NULL);
     yycol+=yyleng;//列号加上单词长度
 }
 
 ";" {
     dump_tokens("SEMICOLON", yytext, yylineno, yycol,KIND_NONE,NULL);
     yycol+=yyleng;//列号加上单词长度
-}
-"," {
-    dump_tokens("COMMA", yytext, yylineno, yycol,KIND_NONE,NULL);
 }
 
 "(" {
@@ -169,6 +181,65 @@ ANNOTATION2 "/*"([^*]|\*+[^/])*\*+"/"
     yycol+=yyleng;//列号加上单词长度
 }
 
+"[" {
+    dump_tokens("LBRACKET",yytext ,yylineno, yycol ,KIND_NONE,NULL);
+    yycol+=yyleng;//列号加上单词长度
+}
+"]" {
+    dump_tokens("RBRACKET",yytext ,yylineno, yycol ,KIND_NONE,NULL);
+    yycol+=yyleng;//列号加上单词长度
+}
+"," {
+    dump_tokens("COMMA",yytext,yylineno ,yycol ,KIND_NONE,NULL);
+    yycol+=yyleng;//列号加上单词长度
+}
+"%" {
+    dump_tokens("MOD", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+
+">=" {
+    dump_tokens("GE", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+
+"<=" {
+    dump_tokens("LE", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+
+"const" {
+    dump_tokens("CONST", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+
+"while" {
+    dump_tokens("WHILE", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+
+"break" {
+    dump_tokens("BREAK", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+
+"continue" {
+    dump_tokens("CONTINUE", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+"for" {
+    dump_tokens("FOR", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+"do" {
+    dump_tokens("DO", yytext, yylineno, yycol, KIND_NONE, NULL);
+    yycol += yyleng;
+}
+
+
+
+
+    /*变量的处理,一型一码*/
 {ID} {
     dump_tokens("ID", yytext, yylineno, yycol,KIND_NONE,NULL);
     yycol+=yyleng;//列号加上单词长度
@@ -181,6 +252,8 @@ ANNOTATION2 "/*"([^*]|\*+[^/])*\*+"/"
 
 {WHITE} {yycol++;} //为了记录列号,将空白符号加上列号
 
+    /* 231230景千夏的代码 */
+    /*{}表示宏定义替换 */
 {DECIMIAL} {
     int decimal;
     decimal = atoi(yytext);
@@ -209,9 +282,7 @@ ANNOTATION2 "/*"([^*]|\*+[^/])*\*+"/"
     dump_tokens("FLOAT ", yytext, yylineno ,yycol,KIND_FLOAT,&fnum);
     yycol+=yyleng;//列号加上单词长度
 }
-{ANNOTATION1}|{ANNOTATION2} {
-    //忽略注释并且处理行号和列号
-    //递增行号,如果遇到换行符就行号加1,列号归零
+{ANNOTATION1}|{ANNOTATION2} {//忽略注释并且处理行号和列号递增行号,如果遇到换行符就行号加1,列号归零
     int i;
     for (i=0;i<yyleng;i++){
         if(yytext[i]=='\n'){
@@ -223,4 +294,3 @@ ANNOTATION2 "/*"([^*]|\*+[^/])*\*+"/"
     }
 }
 %%
-/* user code section */
